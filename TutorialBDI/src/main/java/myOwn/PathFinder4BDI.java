@@ -1,129 +1,188 @@
 package myOwn;
 
-import java.awt.Point;
-import java.util.concurrent.ThreadLocalRandom;
-
-import jadex.bdiv3.annotation.Belief;
-import jadex.bdiv3.annotation.Goal;
-import jadex.bdiv3.annotation.GoalMaintainCondition;
-import jadex.bdiv3.annotation.GoalTargetCondition;
-import jadex.bdiv3.annotation.Plan;
-import jadex.bdiv3.annotation.Trigger;
+import evs.bdi.agent.Main;
+import jadex.bdiv3.annotation.*;
 import jadex.bdiv3.features.IBDIAgentFeature;
 import jadex.bdiv3.model.MProcessableElement.ExcludeMode;
-import jadex.bridge.IComponentStep;
-import jadex.bridge.IInternalAccess;
 import jadex.bridge.component.IExecutionFeature;
-import jadex.commons.future.IFuture;
 import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.AgentBody;
 import jadex.micro.annotation.AgentCreated;
 import jadex.micro.annotation.AgentFeature;
 
+import java.awt.*;
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+
 @Agent
 public class PathFinder4BDI {
+    ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
+    @AgentFeature
+    protected IExecutionFeature execFeature;
 
-	@AgentFeature
-	protected IExecutionFeature execFeature;
+    @Belief
+    protected boolean foundAllTargets;
 
-	@Belief
-	protected boolean found;
+    @Belief
+    protected Point position;
 
-	@Belief
-	protected Point position;
+    @AgentFeature
+    protected IBDIAgentFeature bdiFeature;
 
-	@AgentFeature
-	protected IBDIAgentFeature bdiFeature;
+    protected final Point chargingPosition = new Point(0, 0);
 
-	protected Point target;
+    protected boolean needCharging = false;
 
-	protected int batteryStatus;
+    protected int batteryStatus;
 
-	@AgentCreated
-	public void init() {
-		this.found = false;
-		this.target = new Point(5, 5);
-		this.position = new Point(0, 0);
-		this.batteryStatus = 100;
-	}
+    @AgentCreated
+    public void init() {
+        this.foundAllTargets = false;
+        setPosition(new Point(0, 0));
+        this.batteryStatus = 100;
+        addDirt(new Point(2, 2));
+    }
 
-	@Goal(excludemode = ExcludeMode.Never)
-	public class MaintainStorageGoal {
-		@GoalMaintainCondition(beliefs = "position")
-		protected boolean maintain() {
-			return found;
-		}
+    @Goal(excludemode = ExcludeMode.Never)
+    public class MaintainStorageGoal {
+        @GoalMaintainCondition(beliefs = "position")
+        protected boolean maintain() {
+            return foundAllTargets;
+        }
 
-		@GoalTargetCondition(beliefs = "position")
-		protected boolean target() {
-			return found;
-		}
-	}
+        @GoalTargetCondition(beliefs = "position")
+        protected boolean target() {
+            return foundAllTargets;
+        }
+    }
 
-	@Plan(trigger = @Trigger(goals = MaintainStorageGoal.class))
-	protected void move() throws InterruptedException {
-		if (batteryStatus <= 0) {
-			System.out.println("AHHHHH CANT MOVE!!!!!!!");
-			return;
-		}
+    @Plan(trigger = @Trigger(goals = MaintainStorageGoal.class))
+    protected void move() throws InterruptedException {
+        try {
+            if (foundAllTargets)
+                return;
 
-		if (found)
-			return;
+            do {
+                if (batteryStatus <= 0) {
+                    System.out.println("AHHHHH CANT MOVE!!!!!!!");
+                    Thread.sleep(1000);
+                    return;
+                }
 
-		if (batteryStatus < 20) {
-			System.out.print("Need to charge!");
-			target.x = 0;
-			target.y = 0;
-		}
+                if (getDistance(chargingPosition, position) * 2 + 4 > batteryStatus) {
+                    System.out.println("Need to charge!");
+                    needCharging = true;
+                }
 
-		Thread.sleep(600);
+                Thread.sleep(600);
+                Point nextTarget = null;
 
-		if (position.x > target.x) {
-			position.x--;
-			batteryStatus = batteryStatus - 2;
-			System.out.println("moved left");
-		} else if (position.x < target.x) {
-			position.x++;
-			batteryStatus = batteryStatus - 2;
-			System.out.println("moved right");
-		} else if (position.y < target.y) {
-			position.y++;
-			batteryStatus = batteryStatus - 2;
-			System.out.println("moved up");
-		} else if (position.y > target.y) {
-			position.y--;
-			batteryStatus = batteryStatus - 2;
-			System.out.println("moved down");
-		}
-		System.out.println("Position:" + position.toString() + "Target:" + target.toString());
-		if (position.equals(target)) {
-			if (target.x == 0 && target.y == 0) {
-				System.out.print("charge battery...");
-				Thread.sleep(1000);
-				batteryStatus = 100;
-				System.out.println("battry charged");
-			}
-			System.out.println("Yayyy! Me nau finish.");
-			found = true;
-		}
-	}
+                Collection<Point> targets = getTargets();
+                if (needCharging) {
+                    nextTarget = chargingPosition;
+                } else {
+                    int minDistance = Integer.MAX_VALUE;
+                    for (Point target : targets) {
+                        int distance = getDistance(position, target);
+                        if (distance < minDistance) {
+                            nextTarget = target;
+                            minDistance = distance;
+                        }
+                    }
+                }
 
-	@AgentBody
-	public void body() {
-		bdiFeature.dispatchTopLevelGoal(new MaintainStorageGoal());
+                System.out.println("Position: (" + position.x + "," + position.y + ") Target: (" + nextTarget.x + "," + nextTarget.y + ") Distance : " + getDistance(position, nextTarget));
 
-		execFeature.repeatStep(0, 4000, new IComponentStep<Void>() {
+                if (position.x > nextTarget.x) {
+                    moveLeft();
+                } else if (position.x < nextTarget.x) {
+                    moveRight();
+                } else if (position.y < nextTarget.y) {
+                    moveDown();
+                } else if (position.y > nextTarget.y) {
+                    moveUp();
+                }
 
-			public IFuture<Void> execute(IInternalAccess ia) {
-				int nextx = ThreadLocalRandom.current().nextInt(-5, 5 + 1);
-				int nexty = ThreadLocalRandom.current().nextInt(-5, 5 + 1);
-				target.x = nextx;
-				target.y = nexty;
-				found = false;
+                if (position.equals(nextTarget)) {
+                    if (nextTarget.equals(chargingPosition)) {
+                        System.out.print("charging battery...");
+                        Thread.sleep(1000);
+                        batteryStatus = 100;
+                        needCharging = false;
+                        System.out.println("battery charged");
 
-				return IFuture.DONE;
-			}
-		});
+                    } else if (targets.size() == 0) {
+                        System.out.println("Yayyy! Me nau finish.");
+                        foundAllTargets = true;
+                    }
+                }
+            } while (!foundAllTargets);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	}
+    @AgentBody
+    public void body() {
+        bdiFeature.dispatchTopLevelGoal(new MaintainStorageGoal());
+
+        timer.scheduleWithFixedDelay(() -> {
+            ThreadLocalRandom rand = ThreadLocalRandom.current();
+            addDirt(new Point(rand.nextInt(10), rand.nextInt(10)));
+            foundAllTargets = false;
+        }, 0, 2, TimeUnit.SECONDS);
+
+//        execFeature.repeatStep(0, 2000, ia -> {
+//            ThreadLocalRandom rand = ThreadLocalRandom.current();
+//            addDirt(new Point(rand.nextInt(10), rand.nextInt(10)));
+//            foundAllTargets = false;
+//
+//            return IFuture.DONE;
+//        });
+    }
+
+    protected void setPosition(Point position) {
+        this.position = position;
+        Main.getController().setPosition(position);
+    }
+
+    private void moveLeft() {
+        setPosition(new Point(position.x - 1, position.y));
+        batteryStatus = batteryStatus - 2;
+        System.out.println("moved left, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
+    }
+
+    private void moveRight() {
+        setPosition(new Point(position.x + 1, position.y));
+        batteryStatus = batteryStatus - 2;
+        System.out.println("moved right, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
+    }
+
+    private void moveUp() {
+        setPosition(new Point(position.x, position.y - 1));
+        batteryStatus = batteryStatus - 2;
+        System.out.println("moved up, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
+    }
+
+    private void moveDown() {
+        setPosition(new Point(position.x, position.y + 1));
+        batteryStatus = batteryStatus - 2;
+        System.out.println("moved down, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
+    }
+
+    private static void addDirt(Point p) {
+        Main.getController().addShit(p);
+    }
+
+    private static int getDistance(Point p1, Point p2) {
+        return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+    }
+
+    private static Set<Point> getTargets() {
+        return Main.getController().getShitPositions();
+    }
 }

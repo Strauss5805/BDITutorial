@@ -1,5 +1,6 @@
 package evs.bdi.agent;
 
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
@@ -10,9 +11,10 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 
 import java.awt.*;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GuiController {
     public GridPane boardGrid;
@@ -24,7 +26,7 @@ public class GuiController {
     private ImageView robotView;
     private Image shitImage;
     private ObjectProperty<Point> robotPos = new SimpleObjectProperty<>(new Point(4, 4));
-    private HashMap<Point, ImageView> shitPositions = new HashMap<>();
+    private ConcurrentHashMap<Point, ImageView> shitPositions = new ConcurrentHashMap<>();
 
     public void initialize() {
         shitImage = new Image(getClass().getResourceAsStream("/shit.png"));
@@ -42,14 +44,16 @@ public class GuiController {
         }
 
         addDirtButton.setOnMouseClicked(event -> {
-            StackPane pane = panes[new Random().nextInt(10)][new Random().nextInt(10)];
-            pane.getChildren().remove(robotView);
-            pane.setBackground(new Background(new BackgroundFill(Paint.valueOf("red"), null, null)));
-            pane.getChildren().add(robotView);
-            pane.setPadding(Insets.EMPTY);
+            addShit(new Point(new Random().nextInt(10), new Random().nextInt(10)));
         });
 
         robotPos.addListener((observable, oldValue, newValue) -> {
+            StackPane pane = panes[newValue.x][newValue.y];
+            pane.getChildren().remove(robotView);
+//            pane.setBackground(new Background(new BackgroundFill(Paint.valueOf("red"), null, null)));
+            pane.getChildren().add(robotView);
+            pane.setPadding(Insets.EMPTY);
+
             for (Point shitPosition : shitPositions.keySet()) {
                 if (newValue.equals(shitPosition)) {
                     panes[shitPosition.x][shitPosition.y].getChildren().remove(shitPositions.get(shitPosition));
@@ -59,26 +63,28 @@ public class GuiController {
         });
     }
 
-    public void addShit(int x, int y) {
-        StackPane stackPane = panes[x][y];
+    public void addShit(Point p) {
+        StackPane stackPane = panes[p.x][p.y];
         if (stackPane.getChildren().size() > 0) {
+            // do not add to fields were already an image is present
             return;
         }
-        if (isOutsideField(x, y)) {
+        if (isOutsideField(p)) {
             throw new IllegalArgumentException("x and y outside of bounds");
         }
 
-        ImageView shitView = new ImageView(shitImage);
-        stackPane.getChildren().add(shitView);
-        shitPositions.put(new Point(x, y), shitView);
+        Platform.runLater(() -> {
+            ImageView shitView = new ImageView(shitImage);
+            stackPane.getChildren().add(shitView);
+            shitPositions.put(p, shitView);
+        });
     }
 
-    public void move(int offsetX, int offsetY) {
-        Point currentPos = robotPos.get();
-        if (isOutsideField(currentPos.x + offsetX, currentPos.y + offsetY)) {
+    public void setPosition(Point p) {
+        if (isOutsideField(p)) {
             throw new IllegalArgumentException("cant move out of bounds");
         }
-        robotPos.setValue(new Point(currentPos.x + offsetX, currentPos.y + offsetY));
+        Platform.runLater(() -> robotPos.setValue(p));
     }
 
     public Point getRobotPosition() {
@@ -86,10 +92,10 @@ public class GuiController {
     }
 
     public Set<Point> getShitPositions() {
-        return shitPositions.keySet();
+        return Collections.unmodifiableSet(shitPositions.keySet());
     }
 
-    private static boolean isOutsideField(int x, int y) {
-        return !(x >= 0 && x < 10 && y >= 0 && y < 10);
+    private static boolean isOutsideField(Point p) {
+        return !(p.x >= 0 && p.x < 10 && p.y >= 0 && p.y < 10);
     }
 }
