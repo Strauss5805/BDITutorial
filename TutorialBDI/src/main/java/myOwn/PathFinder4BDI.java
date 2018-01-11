@@ -140,7 +140,7 @@ public class PathFinder4BDI {
             ThreadLocalRandom rand = ThreadLocalRandom.current();
             addDirt(new Point(rand.nextInt(10), rand.nextInt(10)));
             foundAllTargets = false;
-        }, 0, 15, TimeUnit.SECONDS);
+        }, 0, 2, TimeUnit.SECONDS);
 
         // this does not work while the plan runs because it uses the same thread
 //        execFeature.repeatStep(0, 2000, ia -> {
