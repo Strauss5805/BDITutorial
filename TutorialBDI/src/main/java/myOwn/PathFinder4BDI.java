@@ -44,7 +44,6 @@ public class PathFinder4BDI {
         this.foundAllTargets = false;
         setPosition(new Point(0, 0));
         this.batteryStatus = 100;
-        addDirt(new Point(2, 2));
     }
 
     @Goal(excludemode = ExcludeMode.Never)
@@ -82,6 +81,12 @@ public class PathFinder4BDI {
                 Point nextTarget = null;
 
                 Collection<Point> targets = getTargets();
+                if (targets.size() == 0 && !needCharging) {
+                    System.out.println("Yayyy! Me nau finish.");
+                    foundAllTargets = true;
+                    return;
+                }
+
                 if (needCharging) {
                     nextTarget = chargingPosition;
                 } else {
@@ -95,6 +100,7 @@ public class PathFinder4BDI {
                     }
                 }
 
+                setCurrentTarget(nextTarget);
                 System.out.println("Position: (" + position.x + "," + position.y + ") Target: (" + nextTarget.x + "," + nextTarget.y + ") Distance : " + getDistance(position, nextTarget));
 
                 if (position.x > nextTarget.x) {
@@ -134,8 +140,9 @@ public class PathFinder4BDI {
             ThreadLocalRandom rand = ThreadLocalRandom.current();
             addDirt(new Point(rand.nextInt(10), rand.nextInt(10)));
             foundAllTargets = false;
-        }, 0, 2, TimeUnit.SECONDS);
+        }, 0, 15, TimeUnit.SECONDS);
 
+        // this does not work while the plan runs because it uses the same thread
 //        execFeature.repeatStep(0, 2000, ia -> {
 //            ThreadLocalRandom rand = ThreadLocalRandom.current();
 //            addDirt(new Point(rand.nextInt(10), rand.nextInt(10)));
@@ -184,5 +191,9 @@ public class PathFinder4BDI {
 
     private static Set<Point> getTargets() {
         return Main.getController().getShitPositions();
+    }
+
+    private static void setCurrentTarget(Point p) {
+        Main.getController().setCurrentTarget(p);
     }
 }

@@ -22,6 +22,7 @@ public class GuiController {
     public BorderPane background;
 
     private StackPane[][] panes = new StackPane[10][10];
+    private StackPane currentTargetPane = null;
 
     private ImageView robotView;
     private Image shitImage;
@@ -97,5 +98,18 @@ public class GuiController {
 
     private static boolean isOutsideField(Point p) {
         return !(p.x >= 0 && p.x < 10 && p.y >= 0 && p.y < 10);
+    }
+
+    public void setCurrentTarget(Point p) {
+        if (isOutsideField(p))
+            throw new IllegalArgumentException("point is not on field");
+
+        Platform.runLater(() -> {
+            if (currentTargetPane != null)
+                currentTargetPane.setBackground(null);
+
+            currentTargetPane = panes[p.x][p.y];
+            currentTargetPane.setBackground(new Background(new BackgroundFill(Paint.valueOf("#ffaaaa"), null, null)));
+        });
     }
 }
