@@ -3,15 +3,10 @@ package evs.bdi.agent;
 import jadex.base.PlatformConfiguration;
 import jadex.base.Starter;
 import javafx.application.Application;
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Start the agent
@@ -25,6 +20,8 @@ public class Main extends Application {
         controller = loader.getController();
 
         Scene scene = new Scene(root);
+        // terminate process with jadex when window is closed
+        primaryStage.setOnCloseRequest(event -> System.exit(0));
         primaryStage.setScene(scene);
         primaryStage.show();
 
