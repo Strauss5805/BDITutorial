@@ -1,6 +1,5 @@
-package myOwn;
+package evs.bdi.agent;
 
-import evs.bdi.agent.Main;
 import jadex.bdiv3.annotation.*;
 import jadex.bdiv3.features.IBDIAgentFeature;
 import jadex.bdiv3.model.MProcessableElement.ExcludeMode;
@@ -20,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 @Agent
 public class PathFinder4BDI {
-    ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
     @AgentFeature
     protected IExecutionFeature execFeature;
 

@@ -26,7 +26,7 @@ public class Main extends Application {
         primaryStage.show();
 
         PlatformConfiguration config = PlatformConfiguration.getDefaultNoGui();
-        config.addComponent("myOwn.PathFinder4BDI.class");
+        config.addComponent("evs.bdi.agent.PathFinder4BDI.class");
         Starter.createPlatform(config).get();
     }
 
