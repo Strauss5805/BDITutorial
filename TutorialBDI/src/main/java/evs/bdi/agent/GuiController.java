@@ -6,6 +6,7 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -23,6 +24,7 @@ public class GuiController {
     public Button addDirtButton;
     public BorderPane background;
     public ProgressBar batteryBar;
+    public Label batteryLabel;
 
     private StackPane[][] panes = new StackPane[10][10];
     private StackPane currentTargetPane = null;
@@ -68,6 +70,9 @@ public class GuiController {
                 }
             }
         });
+        batteryLabel.setLabelFor(batteryBar);
+        batteryBar.setVisible(false);
+        batteryLabel.setVisible(false);
     }
 
     public void addDirt(Point p) {
@@ -103,7 +108,7 @@ public class GuiController {
 
     public void setPosition(Point p) {
         if (isOutsideField(p)) {
-            throw new IllegalArgumentException("cant move out of bounds");
+            throw new IllegalArgumentException("Position " + p.toString() + " liegt nicht im Raum!");
         }
         Platform.runLater(() -> robotPos.setValue(p));
     }
@@ -122,7 +127,7 @@ public class GuiController {
 
     public void setCurrentTarget(Point p) {
         if (isOutsideField(p))
-            throw new IllegalArgumentException("point is not on field");
+            throw new IllegalArgumentException("Ziel " + p + " ist nicht auf dem Feld");
 
         Platform.runLater(() -> {
             if (currentTargetPane != null)
@@ -135,6 +140,8 @@ public class GuiController {
 
     public void setBatteryProperty(IntegerProperty batteryProperty) {
         batteryProperty.addListener((ob, ov, newValue) -> {
+            batteryBar.setVisible(true);
+            batteryLabel.setVisible(true);
             Platform.runLater(() -> batteryBar.setProgress(newValue.doubleValue() / 100));
         });
     }

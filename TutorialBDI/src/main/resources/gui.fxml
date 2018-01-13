@@ -17,7 +17,7 @@
                 <Insets top="10" left="10" right="50" bottom="10"/>
             </padding>
             <Button fx:id="addDirtButton" text="Dirty Stuff"/>
-            <Label text="Ladestand:">
+            <Label text="Ladestand:" fx:id="batteryLabel">
                 <padding>
                     <Insets left="20"/>
                 </padding>

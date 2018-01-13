@@ -14,14 +14,29 @@ import java.awt.*;
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Agent
 public class PathFinder4BDI {
-    private ScheduledExecutorService timer = Executors.newSingleThreadScheduledExecutor();
-    @AgentFeature
-    protected IExecutionFeature execFeature;
+    /**
+     * Die Position der Aufladestation.
+     */
+    private final Point chargingPosition = new Point(0, 0);
+
+    /**
+     * Zeigt an, ob Aufladen nötig ist.
+     */
+    private boolean needCharging = false;
+
+    /**
+     * Feld für den Akkustand des Roboters. Ist vom Typ SimpleIntegerProperty, damit die Änderungen in der GUI angezeigt
+     * werden.
+     */
+    private SimpleIntegerProperty batteryStatus = new SimpleIntegerProperty(100);
+    /**
+     * Referenz zur GUI.
+     */
+    private final GuiController gui;
 
     @Belief
     private boolean foundAllTargets;
@@ -31,18 +46,19 @@ public class PathFinder4BDI {
 
     @AgentFeature
     private IBDIAgentFeature bdiFeature;
+    @AgentFeature
+    protected IExecutionFeature execFeature;
 
-    private final Point chargingPosition = new Point(0, 0);
 
-    private boolean needCharging = false;
-
-    private SimpleIntegerProperty batteryStatus = new SimpleIntegerProperty(100);
+    public PathFinder4BDI() {
+        gui = Main.getController();
+        gui.setBatteryProperty(batteryStatus);
+    }
 
     @AgentCreated
     public void init() {
         this.foundAllTargets = false;
-        setPosition(new Point(0, 0));
-        Main.getController().setBatteryProperty(batteryStatus);
+        setPosition(new Point(0, 0), "start");
     }
 
     @Goal(excludemode = ExcludeMode.Never)
@@ -59,7 +75,7 @@ public class PathFinder4BDI {
     }
 
     @Plan(trigger = @Trigger(goals = MaintainStorageGoal.class))
-    protected void move() throws InterruptedException {
+    protected void move() {
         try {
             if (foundAllTargets)
                 return;
@@ -135,7 +151,7 @@ public class PathFinder4BDI {
     public void body() {
         bdiFeature.dispatchTopLevelGoal(new MaintainStorageGoal());
 
-        timer.scheduleWithFixedDelay(() -> {
+        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(() -> {
             addDirtRandomly();
             foundAllTargets = false;
         }, 0, 2, TimeUnit.SECONDS);
@@ -150,45 +166,79 @@ public class PathFinder4BDI {
 //        });
     }
 
-    private void setPosition(Point position) {
+    /**
+     * Bewegt den Roboter nach links.
+     */
+    private void moveLeft() {
+        setPosition(new Point(position.x - 1, position.y), "links");
+    }
+
+    /**
+     * Bewegt den Roboter nach rechts.
+     */
+    private void moveRight() {
+        setPosition(new Point(position.x + 1, position.y), "rechts");
+    }
+
+    /**
+     * Bewegt den Roboter nach oben.
+     */
+    private void moveUp() {
+        setPosition(new Point(position.x, position.y - 1), "oben");
+    }
+
+    /**
+     * Bewegt den Roboter nach unten.
+     */
+    private void moveDown() {
+        setPosition(new Point(position.x, position.y + 1), "unten");
+    }
+
+    /**
+     * Setzt die Position des Staubsaugerroboters. NICHT DIREKT BENUTZEN! Nutze die Funktionen moveUp etc.
+     *
+     * @param position die neue Position.
+     */
+    private void setPosition(Point position, String direction) {
+        gui.setPosition(position);
         this.position = position;
         batteryStatus.setValue(batteryStatus.get() - 2);
-        Main.getController().setPosition(position);
+
+        System.out.println("Bewegung nach " + direction + ", Akku " + batteryStatus.get() + "%," +
+                " Abstand zur Ladestatioon: " + getDistance(position, chargingPosition));
     }
 
-    private void moveLeft() {
-        setPosition(new Point(position.x - 1, position.y));
-        System.out.println("moved left, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
+    /**
+     * Fügt an einer zufälligen unbesetzten Position auf dem Feld eine Portion Dreck hinzu
+     */
+    private void addDirtRandomly() {
+        gui.addDirtRandomly();
     }
 
-    private void moveRight() {
-        setPosition(new Point(position.x + 1, position.y));
-        System.out.println("moved right, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
-    }
-
-    private void moveUp() {
-        setPosition(new Point(position.x, position.y - 1));
-        System.out.println("moved up, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
-    }
-
-    private void moveDown() {
-        setPosition(new Point(position.x, position.y + 1));
-        System.out.println("moved down, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
-    }
-
-    private static void addDirtRandomly() {
-        Main.getController().addDirtRandomly();
-    }
-
+    /**
+     * Berechnet die Anzahl der nötigen Schritte, um von einem Punkt zu einem anderen zu kommen (Manhattan-Distanz).
+     *
+     * @param p1 der erste Punkt
+     * @param p2 der zweite Punkt
+     * @return Anzahl der Schritte
+     */
     private static int getDistance(Point p1, Point p2) {
         return Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
     }
 
-    private static Set<Point> getTargets() {
-        return Main.getController().getDirtPositions();
+    /**
+     * Holt eine Liste der Ziele (also Dreckshaufen).
+     */
+    private Set<Point> getTargets() {
+        return gui.getDirtPositions();
     }
 
-    private static void setCurrentTarget(Point p) {
-        Main.getController().setCurrentTarget(p);
+    /**
+     * Setzt das aktuelle Ziel, damit es in der GUI markiert wird.
+     *
+     * @param p der Zielpunkt
+     */
+    private void setCurrentTarget(Point p) {
+        gui.setCurrentTarget(p);
     }
 }
