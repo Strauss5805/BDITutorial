@@ -8,6 +8,7 @@ import jadex.micro.annotation.Agent;
 import jadex.micro.annotation.AgentBody;
 import jadex.micro.annotation.AgentCreated;
 import jadex.micro.annotation.AgentFeature;
+import javafx.beans.property.SimpleIntegerProperty;
 
 import java.awt.*;
 import java.util.Collection;
@@ -23,25 +24,25 @@ public class PathFinder4BDI {
     protected IExecutionFeature execFeature;
 
     @Belief
-    protected boolean foundAllTargets;
+    private boolean foundAllTargets;
 
     @Belief
-    protected Point position;
+    private Point position;
 
     @AgentFeature
-    protected IBDIAgentFeature bdiFeature;
+    private IBDIAgentFeature bdiFeature;
 
-    protected final Point chargingPosition = new Point(0, 0);
+    private final Point chargingPosition = new Point(0, 0);
 
-    protected boolean needCharging = false;
+    private boolean needCharging = false;
 
-    protected int batteryStatus;
+    private SimpleIntegerProperty batteryStatus = new SimpleIntegerProperty(100);
 
     @AgentCreated
     public void init() {
         this.foundAllTargets = false;
         setPosition(new Point(0, 0));
-        this.batteryStatus = 100;
+        Main.getController().setBatteryProperty(batteryStatus);
     }
 
     @Goal(excludemode = ExcludeMode.Never)
@@ -64,13 +65,13 @@ public class PathFinder4BDI {
                 return;
 
             do {
-                if (batteryStatus <= 0) {
+                if (batteryStatus.get() <= 0) {
                     System.out.println("AHHHHH CANT MOVE!!!!!!!");
                     Thread.sleep(1000);
                     return;
                 }
 
-                if (getDistance(chargingPosition, position) * 2 + 4 > batteryStatus) {
+                if (getDistance(chargingPosition, position) * 2 + 4 > batteryStatus.get()) {
                     System.out.println("Need to charge!");
                     needCharging = true;
                 }
@@ -115,7 +116,7 @@ public class PathFinder4BDI {
                     if (nextTarget.equals(chargingPosition)) {
                         System.out.print("charging battery...");
                         Thread.sleep(1000);
-                        batteryStatus = 100;
+                        batteryStatus.setValue(100);
                         needCharging = false;
                         System.out.println("battery charged");
 
@@ -149,37 +150,30 @@ public class PathFinder4BDI {
 //        });
     }
 
-    protected void setPosition(Point position) {
+    private void setPosition(Point position) {
         this.position = position;
+        batteryStatus.setValue(batteryStatus.get() - 2);
         Main.getController().setPosition(position);
     }
 
     private void moveLeft() {
         setPosition(new Point(position.x - 1, position.y));
-        batteryStatus = batteryStatus - 2;
-        System.out.println("moved left, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
+        System.out.println("moved left, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
     }
 
     private void moveRight() {
         setPosition(new Point(position.x + 1, position.y));
-        batteryStatus = batteryStatus - 2;
-        System.out.println("moved right, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
+        System.out.println("moved right, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
     }
 
     private void moveUp() {
         setPosition(new Point(position.x, position.y - 1));
-        batteryStatus = batteryStatus - 2;
-        System.out.println("moved up, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
+        System.out.println("moved up, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
     }
 
     private void moveDown() {
         setPosition(new Point(position.x, position.y + 1));
-        batteryStatus = batteryStatus - 2;
-        System.out.println("moved down, battery " + batteryStatus + ", distance to charging: " + getDistance(position, chargingPosition));
-    }
-
-    private static void addDirt(Point p) {
-        Main.getController().addDirt(p);
+        System.out.println("moved down, battery " + batteryStatus.get() + ", distance to charging: " + getDistance(position, chargingPosition));
     }
 
     private static void addDirtRandomly() {

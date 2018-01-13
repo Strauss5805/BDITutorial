@@ -1,10 +1,12 @@
 package evs.bdi.agent;
 
 import javafx.application.Platform;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -20,6 +22,7 @@ public class GuiController {
     public GridPane boardGrid;
     public Button addDirtButton;
     public BorderPane background;
+    public ProgressBar batteryBar;
 
     private StackPane[][] panes = new StackPane[10][10];
     private StackPane currentTargetPane = null;
@@ -48,7 +51,7 @@ public class GuiController {
         panes[0][0].getChildren().add(chargeView);
 
         addDirtButton.setOnMouseClicked(event -> {
-            addDirt(new Point(new Random().nextInt(10), new Random().nextInt(10)));
+            addDirtRandomly();
         });
 
         robotPos.addListener((observable, oldValue, newValue) -> {
@@ -127,6 +130,12 @@ public class GuiController {
 
             currentTargetPane = panes[p.x][p.y];
             currentTargetPane.setBackground(new Background(new BackgroundFill(Paint.valueOf("#ffaaaa"), null, null)));
+        });
+    }
+
+    public void setBatteryProperty(IntegerProperty batteryProperty) {
+        batteryProperty.addListener((ob, ov, newValue) -> {
+            Platform.runLater(() -> batteryBar.setProgress(newValue.doubleValue() / 100));
         });
     }
 }
