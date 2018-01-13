@@ -25,12 +25,12 @@ public class GuiController {
     private StackPane currentTargetPane = null;
 
     private ImageView robotView;
-    private Image shitImage;
+    private Image dirtImage;
     private ObjectProperty<Point> robotPos = new SimpleObjectProperty<>(new Point(4, 4));
-    private ConcurrentHashMap<Point, ImageView> shitPositions = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<Point, ImageView> dirtPositions = new ConcurrentHashMap<>();
 
     public void initialize() {
-        shitImage = new Image(getClass().getResourceAsStream("/shit.png"));
+        dirtImage = new Image(getClass().getResourceAsStream("/dirt.png"));
         robotView = new ImageView(new Image(getClass().getResourceAsStream("/roboter.png")));
         robotView.setPreserveRatio(false);
 
@@ -44,8 +44,11 @@ public class GuiController {
             }
         }
 
+        ImageView chargeView = new ImageView(new Image(getClass().getResourceAsStream("/charge.png")));
+        panes[0][0].getChildren().add(chargeView);
+
         addDirtButton.setOnMouseClicked(event -> {
-            addShit(new Point(new Random().nextInt(10), new Random().nextInt(10)));
+            addDirt(new Point(new Random().nextInt(10), new Random().nextInt(10)));
         });
 
         robotPos.addListener((observable, oldValue, newValue) -> {
@@ -55,16 +58,16 @@ public class GuiController {
             pane.getChildren().add(robotView);
             pane.setPadding(Insets.EMPTY);
 
-            for (Point shitPosition : shitPositions.keySet()) {
-                if (newValue.equals(shitPosition)) {
-                    panes[shitPosition.x][shitPosition.y].getChildren().remove(shitPositions.get(shitPosition));
-                    shitPositions.remove(shitPosition);
+            for (Point dirtPosition : dirtPositions.keySet()) {
+                if (newValue.equals(dirtPosition)) {
+                    panes[dirtPosition.x][dirtPosition.y].getChildren().remove(dirtPositions.get(dirtPosition));
+                    dirtPositions.remove(dirtPosition);
                 }
             }
         });
     }
 
-    public void addShit(Point p) {
+    public void addDirt(Point p) {
         StackPane stackPane = panes[p.x][p.y];
         if (stackPane.getChildren().size() > 0) {
             // do not add to fields were already an image is present
@@ -75,10 +78,24 @@ public class GuiController {
         }
 
         Platform.runLater(() -> {
-            ImageView shitView = new ImageView(shitImage);
-            stackPane.getChildren().add(shitView);
-            shitPositions.put(p, shitView);
+            ImageView dirtView = new ImageView(dirtImage);
+            stackPane.getChildren().add(dirtView);
+            dirtPositions.put(p, dirtView);
         });
+    }
+
+    public void addDirtRandomly() {
+        Random r = new Random();
+        Point p;
+        while (true) {
+            p = new Point(r.nextInt(10), r.nextInt(10));
+            StackPane stackPane = panes[p.x][p.y];
+
+            if (stackPane.getChildren().size() == 0) {
+                addDirt(p);
+                return;
+            }
+        }
     }
 
     public void setPosition(Point p) {
@@ -92,8 +109,8 @@ public class GuiController {
         return robotPos.get();
     }
 
-    public Set<Point> getShitPositions() {
-        return Collections.unmodifiableSet(shitPositions.keySet());
+    public Set<Point> getDirtPositions() {
+        return Collections.unmodifiableSet(dirtPositions.keySet());
     }
 
     private static boolean isOutsideField(Point p) {

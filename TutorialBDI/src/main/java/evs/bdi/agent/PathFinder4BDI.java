@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 @Agent
@@ -136,8 +135,7 @@ public class PathFinder4BDI {
         bdiFeature.dispatchTopLevelGoal(new MaintainStorageGoal());
 
         timer.scheduleWithFixedDelay(() -> {
-            ThreadLocalRandom rand = ThreadLocalRandom.current();
-            addDirt(new Point(rand.nextInt(10), rand.nextInt(10)));
+            addDirtRandomly();
             foundAllTargets = false;
         }, 0, 2, TimeUnit.SECONDS);
 
@@ -181,7 +179,11 @@ public class PathFinder4BDI {
     }
 
     private static void addDirt(Point p) {
-        Main.getController().addShit(p);
+        Main.getController().addDirt(p);
+    }
+
+    private static void addDirtRandomly() {
+        Main.getController().addDirtRandomly();
     }
 
     private static int getDistance(Point p1, Point p2) {
@@ -189,7 +191,7 @@ public class PathFinder4BDI {
     }
 
     private static Set<Point> getTargets() {
-        return Main.getController().getShitPositions();
+        return Main.getController().getDirtPositions();
     }
 
     private static void setCurrentTarget(Point p) {
