@@ -27,7 +27,7 @@ public class PathFinderBDI {
     /**
      * Gibt die aktuelle Position des Staubsaugerroboters zurück
      */
-    private Point getPosition() {
+    private Point getPositionBelief() {
         // Für Aufgabe 1
         return null;
     }
@@ -37,7 +37,7 @@ public class PathFinderBDI {
      *
      * @param position die neue Position
      */
-    private void setPosition(Point position) {
+    private void setPositionBelief(Point position) {
         // Für aufgabe 1
     }
 
@@ -79,28 +79,28 @@ public class PathFinderBDI {
      * Bewegt den Roboter nach links.
      */
     private void moveLeft() throws InterruptedException {
-        setPosition(new Point(getPosition().x - 1, getPosition().y), "links");
+        setPosition(new Point(getPositionBelief().x - 1, getPositionBelief().y), "links");
     }
 
     /**
      * Bewegt den Roboter nach rechts.
      */
     private void moveRight() throws InterruptedException {
-        setPosition(new Point(getPosition().x + 1, getPosition().y), "rechts");
+        setPosition(new Point(getPositionBelief().x + 1, getPositionBelief().y), "rechts");
     }
 
     /**
      * Bewegt den Roboter nach oben.
      */
     private void moveUp() throws InterruptedException {
-        setPosition(new Point(getPosition().x, getPosition().y - 1), "oben");
+        setPosition(new Point(getPositionBelief().x, getPositionBelief().y - 1), "oben");
     }
 
     /**
      * Bewegt den Roboter nach unten.
      */
     private void moveDown() throws InterruptedException {
-        setPosition(new Point(getPosition().x, getPosition().y + 1), "unten");
+        setPosition(new Point(getPositionBelief().x, getPositionBelief().y + 1), "unten");
     }
 
     /**
@@ -115,7 +115,7 @@ public class PathFinderBDI {
             return;
         }
         gui.setPosition(position);
-        setPosition(position);
+        setPositionBelief(position);
         drainBattery();
 
         System.out.println("Bewegung nach " + direction + ", Akku " + getBatteryStatus() + "%," +
