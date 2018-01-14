@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.FutureTask;
 
 public class GuiController {
     public GridPane boardGrid;
@@ -84,12 +85,22 @@ public class GuiController {
         if (isOutsideField(p)) {
             throw new IllegalArgumentException("x and y outside of bounds");
         }
-
-        Platform.runLater(() -> {
+        final FutureTask<Void> task = new FutureTask<>(() -> {
             ImageView dirtView = new ImageView(dirtImage);
             stackPane.getChildren().add(dirtView);
             dirtPositions.put(p, dirtView);
+            return null;
         });
+
+        if (Platform.isFxApplicationThread()) {
+            task.run();
+        } else {
+            Platform.runLater(task);
+            try {
+                task.get();
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public void addDirtRandomly() {
