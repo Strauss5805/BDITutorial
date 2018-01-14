@@ -82,7 +82,7 @@ public class PathFinder4BDI {
 
             do {
                 if (getDistance(chargingPosition, position) * 2 + 4 > batteryStatus.get()) {
-                    System.out.println("Need to charge!");
+                    System.out.println("Akku bald leer!");
                     needCharging = true;
                 }
 
@@ -122,11 +122,11 @@ public class PathFinder4BDI {
 
                 if (position.equals(nextTarget)) {
                     if (nextTarget.equals(chargingPosition)) {
-                        System.out.print("charging battery...");
+                        System.out.print("Akku laden... ");
                         Thread.sleep(1000);
                         batteryStatus.setValue(100);
                         needCharging = false;
-                        System.out.println("battery charged");
+                        System.out.println("Auf 100% geladen!");
 
                     } else if (targets.size() == 0) {
                         System.out.println("Yayyy! Me nau finish.");
@@ -194,7 +194,7 @@ public class PathFinder4BDI {
      */
     private void setPosition(Point position, String direction) throws InterruptedException {
         if (batteryStatus.get() <= 0) {
-            System.out.println("AHHHHH BATTERY EMPTY!!! CANT MOVE!!!!!!!11elf");
+            System.out.println("AHHHHH AKKU LEER!!! ICH KANN MICH NICHT BEWEGEN!!!!!!!11elf");
             Thread.sleep(1000);
             return;
         }
