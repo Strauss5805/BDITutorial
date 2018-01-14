@@ -74,6 +74,32 @@ public class PathFinderBDI {
     //         AB HIER NICHTS BEARBEITEN!!!!!!
     // ================================================
 
+    /**
+     * Does one step in direction to the target.
+     *
+     * @param target the target point
+     */
+    private void stepToTarget(Point target) throws InterruptedException {
+        Point position = getPositionBelief();
+        if (position.x > target.x) {
+            moveLeft();
+        } else if (position.x < target.x) {
+            moveRight();
+        } else if (position.y < target.y) {
+            moveDown();
+        } else if (position.y > target.y) {
+            moveUp();
+        }
+
+        Thread.sleep(500);
+
+        if (position.equals(target) && target.equals(chargingPosition)) {
+            System.out.print("Akku laden... ");
+            Thread.sleep(1000);
+            chargeBattery();
+            System.out.println("Auf 100% geladen!");
+        }
+    }
 
     /**
      * Bewegt den Roboter nach links.
