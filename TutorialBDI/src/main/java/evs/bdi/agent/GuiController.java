@@ -95,7 +95,8 @@ public class GuiController {
     public void addDirtRandomly() {
         Random r = new Random();
         Point p;
-        while (true) {
+        // limit retries to 100 if field is full
+        for (int i = 0; i < 100; i++) {
             p = new Point(r.nextInt(10), r.nextInt(10));
             StackPane stackPane = panes[p.x][p.y];
 

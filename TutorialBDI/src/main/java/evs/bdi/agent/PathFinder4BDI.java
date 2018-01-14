@@ -56,7 +56,7 @@ public class PathFinder4BDI {
     }
 
     @AgentCreated
-    public void init() {
+    public void init() throws InterruptedException {
         this.foundAllTargets = false;
         setPosition(new Point(0, 0), "start");
     }
@@ -81,29 +81,22 @@ public class PathFinder4BDI {
                 return;
 
             do {
-                if (batteryStatus.get() <= 0) {
-                    System.out.println("AHHHHH CANT MOVE!!!!!!!");
-                    Thread.sleep(1000);
-                    return;
-                }
-
                 if (getDistance(chargingPosition, position) * 2 + 4 > batteryStatus.get()) {
                     System.out.println("Need to charge!");
                     needCharging = true;
                 }
 
-                Thread.sleep(600);
+                Thread.sleep(500);
                 Point nextTarget = null;
 
                 Collection<Point> targets = getTargets();
-                if (targets.size() == 0 && !needCharging) {
-                    System.out.println("Yayyy! Me nau finish.");
-                    foundAllTargets = true;
-                    return;
-                }
 
                 if (needCharging) {
                     nextTarget = chargingPosition;
+                } else if (targets.size() == 0) {
+                    System.out.println("Yayyy! Me nau finish.");
+                    foundAllTargets = true;
+                    return;
                 } else {
                     int minDistance = Integer.MAX_VALUE;
                     for (Point target : targets) {
@@ -116,7 +109,6 @@ public class PathFinder4BDI {
                 }
 
                 setCurrentTarget(nextTarget);
-                System.out.println("Position: (" + position.x + "," + position.y + ") Target: (" + nextTarget.x + "," + nextTarget.y + ") Distance : " + getDistance(position, nextTarget));
 
                 if (position.x > nextTarget.x) {
                     moveLeft();
@@ -151,10 +143,7 @@ public class PathFinder4BDI {
     public void body() {
         bdiFeature.dispatchTopLevelGoal(new MaintainStorageGoal());
 
-        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(() -> {
-            addDirtRandomly();
-            foundAllTargets = false;
-        }, 0, 2, TimeUnit.SECONDS);
+        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(this::addDirtRandomly, 0, 2, TimeUnit.SECONDS);
 
         // this does not work while the plan runs because it uses the same thread
 //        execFeature.repeatStep(0, 2000, ia -> {
@@ -166,31 +155,35 @@ public class PathFinder4BDI {
 //        });
     }
 
+    /*
+             AB HIER NICHTS BEARBEITEN!!!!!!
+     */
+
     /**
      * Bewegt den Roboter nach links.
      */
-    private void moveLeft() {
+    private void moveLeft() throws InterruptedException {
         setPosition(new Point(position.x - 1, position.y), "links");
     }
 
     /**
      * Bewegt den Roboter nach rechts.
      */
-    private void moveRight() {
+    private void moveRight() throws InterruptedException {
         setPosition(new Point(position.x + 1, position.y), "rechts");
     }
 
     /**
      * Bewegt den Roboter nach oben.
      */
-    private void moveUp() {
+    private void moveUp() throws InterruptedException {
         setPosition(new Point(position.x, position.y - 1), "oben");
     }
 
     /**
      * Bewegt den Roboter nach unten.
      */
-    private void moveDown() {
+    private void moveDown() throws InterruptedException {
         setPosition(new Point(position.x, position.y + 1), "unten");
     }
 
@@ -199,7 +192,12 @@ public class PathFinder4BDI {
      *
      * @param position die neue Position.
      */
-    private void setPosition(Point position, String direction) {
+    private void setPosition(Point position, String direction) throws InterruptedException {
+        if (batteryStatus.get() <= 0) {
+            System.out.println("AHHHHH BATTERY EMPTY!!! CANT MOVE!!!!!!!11elf");
+            Thread.sleep(1000);
+            return;
+        }
         gui.setPosition(position);
         this.position = position;
         batteryStatus.setValue(batteryStatus.get() - 2);
@@ -213,6 +211,7 @@ public class PathFinder4BDI {
      */
     private void addDirtRandomly() {
         gui.addDirtRandomly();
+        foundAllTargets = false;
     }
 
     /**
@@ -239,6 +238,9 @@ public class PathFinder4BDI {
      * @param p der Zielpunkt
      */
     private void setCurrentTarget(Point p) {
+        if (p == null) {
+            throw new IllegalArgumentException("Point p must not be null");
+        }
         gui.setCurrentTarget(p);
     }
 }
