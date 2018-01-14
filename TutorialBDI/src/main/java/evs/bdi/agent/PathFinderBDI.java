@@ -6,7 +6,7 @@ import java.awt.*;
 import java.util.Set;
 
 @Agent
-public class PathFinder4BDI {
+public class PathFinderBDI {
     /**
      * Die Position der Aufladestation.
      */
@@ -20,7 +20,7 @@ public class PathFinder4BDI {
     /**
      * Einfacher Konstruktor, der die Referenz zum GUI-Controller setzt.
      */
-    public PathFinder4BDI() {
+    public PathFinderBDI() {
         gui = Main.getController();
     }
 

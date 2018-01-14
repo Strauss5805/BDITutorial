@@ -32,7 +32,7 @@ public class Main extends Application {
 
         // launch the Jadex Platform with our bdi agent
         PlatformConfiguration config = PlatformConfiguration.getDefaultNoGui();
-        config.addComponent("evs.bdi.agent.PathFinder4BDI.class");
+        config.addComponent("evs.bdi.agent.PathFinderBDI.class");
         Starter.createPlatform(config).get();
     }
 
