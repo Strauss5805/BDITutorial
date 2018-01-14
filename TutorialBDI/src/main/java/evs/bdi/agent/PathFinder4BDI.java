@@ -75,7 +75,7 @@ public class PathFinder4BDI {
     }
 
     @Plan(trigger = @Trigger(goals = MaintainStorageGoal.class))
-    protected void move() {
+    protected void findDirtPlan() {
         try {
             if (foundAllTargets)
                 return;
@@ -205,7 +205,7 @@ public class PathFinder4BDI {
         batteryStatus.setValue(batteryStatus.get() - 2);
 
         System.out.println("Bewegung nach " + direction + ", Akku " + batteryStatus.get() + "%," +
-                " Abstand zur Ladestatioon: " + getDistance(position, chargingPosition));
+                " Abstand zur Ladestation: " + getDistance(position, chargingPosition));
     }
 
     /**
