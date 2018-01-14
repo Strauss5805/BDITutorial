@@ -1,20 +1,9 @@
 package evs.bdi.agent;
 
-import jadex.bdiv3.annotation.*;
-import jadex.bdiv3.features.IBDIAgentFeature;
-import jadex.bdiv3.model.MProcessableElement.ExcludeMode;
-import jadex.bridge.component.IExecutionFeature;
 import jadex.micro.annotation.Agent;
-import jadex.micro.annotation.AgentBody;
-import jadex.micro.annotation.AgentCreated;
-import jadex.micro.annotation.AgentFeature;
-import javafx.beans.property.SimpleIntegerProperty;
 
 import java.awt.*;
-import java.util.Collection;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Agent
 public class PathFinder4BDI {
@@ -24,167 +13,94 @@ public class PathFinder4BDI {
     private final Point chargingPosition = new Point(0, 0);
 
     /**
-     * Zeigt an, ob Aufladen nötig ist.
-     */
-    private boolean needCharging = false;
-
-    /**
-     * Feld für den Akkustand des Roboters. Ist vom Typ SimpleIntegerProperty, damit die Änderungen in der GUI angezeigt
-     * werden.
-     */
-    private SimpleIntegerProperty batteryStatus = new SimpleIntegerProperty(100);
-    /**
      * Referenz zur GUI.
      */
     private final GuiController gui;
 
-    @Belief
-    private boolean foundAllTargets;
-
-    @Belief
-    private Point position;
-
-    @AgentFeature
-    private IBDIAgentFeature bdiFeature;
-    @AgentFeature
-    protected IExecutionFeature execFeature;
-
-
+    /**
+     * Einfacher Konstruktor, der die Referenz zum GUI-Controller setzt.
+     */
     public PathFinder4BDI() {
         gui = Main.getController();
-        gui.setBatteryProperty(batteryStatus);
     }
 
-    @AgentCreated
-    public void init() throws InterruptedException {
-        this.foundAllTargets = false;
-        setPosition(new Point(0, 0), "start");
-    }
-
-    @Goal(excludemode = ExcludeMode.Never)
-    public class MaintainStorageGoal {
-        @GoalMaintainCondition(beliefs = "position")
-        protected boolean maintain() {
-            return foundAllTargets;
-        }
-
-        @GoalTargetCondition(beliefs = "position")
-        protected boolean target() {
-            return foundAllTargets;
-        }
-    }
-
-    @Plan(trigger = @Trigger(goals = MaintainStorageGoal.class))
-    protected void findDirtPlan() {
-        try {
-            if (foundAllTargets)
-                return;
-
-            do {
-                if (getDistance(chargingPosition, position) * 2 + 4 > batteryStatus.get()) {
-                    System.out.println("Akku bald leer!");
-                    needCharging = true;
-                }
-
-                Thread.sleep(500);
-                Point nextTarget = null;
-
-                Collection<Point> targets = getTargets();
-
-                if (needCharging) {
-                    nextTarget = chargingPosition;
-                } else if (targets.size() == 0) {
-                    System.out.println("Yayyy! Me nau finish.");
-                    foundAllTargets = true;
-                    return;
-                } else {
-                    int minDistance = Integer.MAX_VALUE;
-                    for (Point target : targets) {
-                        int distance = getDistance(position, target);
-                        if (distance < minDistance) {
-                            nextTarget = target;
-                            minDistance = distance;
-                        }
-                    }
-                }
-
-                setCurrentTarget(nextTarget);
-
-                if (position.x > nextTarget.x) {
-                    moveLeft();
-                } else if (position.x < nextTarget.x) {
-                    moveRight();
-                } else if (position.y < nextTarget.y) {
-                    moveDown();
-                } else if (position.y > nextTarget.y) {
-                    moveUp();
-                }
-
-                if (position.equals(nextTarget)) {
-                    if (nextTarget.equals(chargingPosition)) {
-                        System.out.print("Akku laden... ");
-                        Thread.sleep(1000);
-                        batteryStatus.setValue(100);
-                        needCharging = false;
-                        System.out.println("Auf 100% geladen!");
-
-                    } else if (targets.size() == 0) {
-                        System.out.println("Yayyy! Me nau finish.");
-                        foundAllTargets = true;
-                    }
-                }
-            } while (!foundAllTargets);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @AgentBody
-    public void body() {
-        bdiFeature.dispatchTopLevelGoal(new MaintainStorageGoal());
-
-        Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(this::addDirtRandomly, 0, 2, TimeUnit.SECONDS);
-
-        // this does not work while the plan runs because it uses the same thread
-//        execFeature.repeatStep(0, 2000, ia -> {
-//            ThreadLocalRandom rand = ThreadLocalRandom.current();
-//            addDirt(new Point(rand.nextInt(10), rand.nextInt(10)));
-//            foundAllTargets = false;
-//
-//            return IFuture.DONE;
-//        });
-    }
-
-    /*
-             AB HIER NICHTS BEARBEITEN!!!!!!
+    /**
+     * Gibt die aktuelle Position des Staubsaugerroboters zurück
      */
+    private Point getPosition() {
+        // Für Aufgabe 1
+        return null;
+    }
+
+    /**
+     * Setzt die Position des Staubsaugerroboters
+     *
+     * @param position die neue Position
+     */
+    private void setPosition(Point position) {
+        // Für aufgabe 1
+    }
+
+    /**
+     * Gibt den aktuellen Ladezustand des Akkus zurück.
+     */
+    private int getBatteryStatus() {
+        // Für Aufgabe 3
+        return 100;
+    }
+
+    /**
+     * Setzt den Akkustand auf 100
+     */
+    private void chargeBattery() {
+        // Für Aufgabe 3
+    }
+
+    /**
+     * Entfernt 2 von der Akkuladung. Wird bei jeder Bewegung aufgerufen.
+     */
+    private void drainBattery() {
+        // Für Aufgabe 3
+    }
+
+    /**
+     * Fügt an einer zufälligen unbesetzten Position auf dem Feld eine Portion Dreck hinzu
+     */
+    private void addDirtRandomly() {
+        gui.addDirtRandomly();
+    }
+
+    // ================================================
+    //         AB HIER NICHTS BEARBEITEN!!!!!!
+    // ================================================
+
 
     /**
      * Bewegt den Roboter nach links.
      */
     private void moveLeft() throws InterruptedException {
-        setPosition(new Point(position.x - 1, position.y), "links");
+        setPosition(new Point(getPosition().x - 1, getPosition().y), "links");
     }
 
     /**
      * Bewegt den Roboter nach rechts.
      */
     private void moveRight() throws InterruptedException {
-        setPosition(new Point(position.x + 1, position.y), "rechts");
+        setPosition(new Point(getPosition().x + 1, getPosition().y), "rechts");
     }
 
     /**
      * Bewegt den Roboter nach oben.
      */
     private void moveUp() throws InterruptedException {
-        setPosition(new Point(position.x, position.y - 1), "oben");
+        setPosition(new Point(getPosition().x, getPosition().y - 1), "oben");
     }
 
     /**
      * Bewegt den Roboter nach unten.
      */
     private void moveDown() throws InterruptedException {
-        setPosition(new Point(position.x, position.y + 1), "unten");
+        setPosition(new Point(getPosition().x, getPosition().y + 1), "unten");
     }
 
     /**
@@ -193,25 +109,17 @@ public class PathFinder4BDI {
      * @param position die neue Position.
      */
     private void setPosition(Point position, String direction) throws InterruptedException {
-        if (batteryStatus.get() <= 0) {
+        if (getBatteryStatus() <= 0) {
             System.out.println("AHHHHH AKKU LEER!!! ICH KANN MICH NICHT BEWEGEN!!!!!!!11elf");
             Thread.sleep(1000);
             return;
         }
         gui.setPosition(position);
-        this.position = position;
-        batteryStatus.setValue(batteryStatus.get() - 2);
+        setPosition(position);
+        drainBattery();
 
-        System.out.println("Bewegung nach " + direction + ", Akku " + batteryStatus.get() + "%," +
+        System.out.println("Bewegung nach " + direction + ", Akku " + getBatteryStatus() + "%," +
                 " Abstand zur Ladestation: " + getDistance(position, chargingPosition));
-    }
-
-    /**
-     * Fügt an einer zufälligen unbesetzten Position auf dem Feld eine Portion Dreck hinzu
-     */
-    private void addDirtRandomly() {
-        gui.addDirtRandomly();
-        foundAllTargets = false;
     }
 
     /**
